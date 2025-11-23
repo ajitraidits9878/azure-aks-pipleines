@@ -1,0 +1,29 @@
+parameters:
+- name: serviceName
+  type: string
+- name: manifestPath
+  type: string
+- name: environment
+  type: string
+  default: 'development'
+
+jobs:
+- deployment: Deploy_${{ parameters.serviceName }}
+  displayName: Deploy ${{ parameters.serviceName }}
+  pool:
+    vmImage: 'ubuntu-latest'
+  environment: '${{ parameters.environment }}'
+  strategy:
+    runOnce:
+      deploy:
+        steps:
+        - task: KubernetesManifest@0
+          displayName: Deploy to AKS
+          inputs:
+            action: 'deploy'
+            kubernetesServiceConnection: '$(kubernetesServiceConnection)'
+            namespace: 'default'
+            manifests: |
+              ${{ parameters.manifestPath }}
+            containers: |
+              $(containerRegistry)/${{ parameters.serviceName }}:$(Build.BuildId)
